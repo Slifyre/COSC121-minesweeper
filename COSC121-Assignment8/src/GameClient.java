@@ -1,7 +1,6 @@
 import javafx.animation.KeyFrame;
 import javafx.animation.Timeline;
 import javafx.application.Application;
-import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Scene;
 import javafx.scene.control.Menu;
@@ -12,34 +11,33 @@ import javafx.scene.input.MouseButton;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.GridPane;
-import javafx.scene.layout.HBox;
 import javafx.stage.Stage;
 import javafx.util.Duration;
 
 public class GameClient extends Application {
-	
-	//Initial Values
+
+	// Initial Values
 	private static int initialMines = 10;
 	private static int remainingMines = 0;
 	private static int correctFlags = 0;
 	private static int boardSizeX = 8;
 	private static int boardSizeY = 8;
 	private static int tileClicks = 0;
-	
+
 	private static int timeElapsed = 0;
-	
+
 	private static boolean firstClick = true;
 	private static boolean alive = true;
 	protected static boolean debug = true;
 	private static boolean win = false;
 
-	//Panes
-	private static BorderPane mainPane; //Main window
+	// Panes
+	private static BorderPane mainPane; // Main window
 	private static MenuBar menuPane; // holds options (mainPane Top)
-	private static HBox topPane; //Holds counters and face (mainPane Center)
-	private static GridPane gamePane; //Holds mines/buttons (mainPane Bottom)
+	private static BorderPane topPane; // Holds counters and face (mainPane Center)
+	private static GridPane gamePane; // Holds mines/buttons (mainPane Bottom)
 
-	//Menu
+	// Menu
 	private static Menu difficultyMenu;
 	private static Menu fileMenu;
 	private static MenuItem saveGame;
@@ -48,27 +46,27 @@ public class GameClient extends Application {
 	private static MenuItem beginner; // 10 Mines. 8x8 board
 	private static MenuItem intermediate; // 40 Mines. 16x16 board
 	private static MenuItem expert; // 99 Mines. 32x16 board
-	
-	//Top Info Bar
+
+	// Top Info Bar
 	private static Display remainingMinesDisplay;
 	private static Face gameFace;
 	private static Display timeElapsedDisplay;
 	private static Timeline animation;
-	
-	//Game Board
-	private static int[][] board; //Holds states of all tiles
-	private static Tile boardButtons[][]; //Holds actual button objects
-	
-	//Main method
+
+	// Game Board
+	private static int[][] board; // Holds states of all tiles
+	private static Tile boardButtons[][]; // Holds actual button objects
+
+	// Main method
 	public static void main(String[] args) {
 		launch(args);
 	}
-	
-	//Start method
+
+	// Start method
 	@Override
 	public void start(Stage window) {
-		
-		//Game Variables
+
+		// Game Variables
 		win = false;
 		firstClick = true;
 		alive = true;
@@ -78,17 +76,17 @@ public class GameClient extends Application {
 		timeElapsed = 0;
 		tileClicks = 0;
 		remainingMines = initialMines;
-		
-		//Main BorderPane
+
+		// Main BorderPane
 		mainPane = new BorderPane();
-		
-		//Menu Items
+
+		// Menu Items
 		menuPane = new MenuBar();
 		difficultyMenu = new Menu("Difficulty");
 		beginner = new MenuItem("Beginner");
 		intermediate = new MenuItem("Intermediate");
 		expert = new MenuItem("Expert");
-		
+
 		fileMenu = new Menu("File");
 		highScores = new MenuItem("High Scores");
 		saveGame = new MenuItem("Save Game");
@@ -96,15 +94,15 @@ public class GameClient extends Application {
 		fileMenu.getItems().add(highScores);
 		fileMenu.getItems().add(loadGame);
 		fileMenu.getItems().add(saveGame);
-		
+
 		difficultyMenu.getItems().add(beginner);
 		difficultyMenu.getItems().add(intermediate);
 		difficultyMenu.getItems().add(expert);
-		
+
 		menuPane.getMenus().add(fileMenu);
 		menuPane.getMenus().add(difficultyMenu);
-		
-			//Difficulty Options
+
+		// Difficulty Options
 		beginner.setOnAction(e -> {
 			initialMines = 10;
 			boardSizeX = 8;
@@ -128,31 +126,27 @@ public class GameClient extends Application {
 			animation.stop();
 			start(window);
 		});
-		
-		
+
 		mainPane.setTop(menuPane);
-		
-		//Top Info Bar
-		topPane = new HBox();
-		topPane.setPadding(new Insets(12, 12, 12, 12));
-		topPane.setAlignment(Pos.CENTER);
-		
-			//Bombs Remaining Display
+
+		// Top Info Bar
+		topPane = new BorderPane();
+
+		// Bombs Remaining Display
 		remainingMinesDisplay = new Display(64, 64, true, true);
 		remainingMinesDisplay.setDisplay(remainingMines);
-		remainingMinesDisplay.setAlignment(Pos.CENTER_LEFT);
-		topPane.getChildren().add(remainingMinesDisplay);
-		
-			//Face
+		topPane.setLeft(remainingMinesDisplay);
+
+		// Face
 		gameFace = new Face(64, 64);
 		gameFace.setOnAction(e -> {
-			//Resets the game when clicked
+			// Resets the game when clicked
 			animation.stop();
 			start(window);
 		});
-		topPane.getChildren().add(gameFace);
-		
-			//Time Elapsed Display
+		topPane.setCenter(gameFace);
+
+		// Time Elapsed Display
 		timeElapsedDisplay = new Display(64, 64, true, true);
 		timeElapsedDisplay.setDisplay(0);
 		animation = new Timeline(new KeyFrame(Duration.millis(1000), e -> {
@@ -160,106 +154,100 @@ public class GameClient extends Application {
 			timeElapsedDisplay.setDisplay(timeElapsed);
 		}));
 		animation.setCycleCount(Timeline.INDEFINITE);
-		topPane.getChildren().add(timeElapsedDisplay);
-		timeElapsedDisplay.setAlignment(Pos.CENTER_RIGHT);
-		
+		topPane.setRight(timeElapsedDisplay);
+
 		mainPane.setCenter(topPane);
-		
-		//Game Pane
+
+		// Game Pane
 		gamePane = new GridPane();
 		gamePane.setAlignment(Pos.CENTER);
 		mainPane.setBottom(gamePane);
-		
+
 		setBoardButtons();
-		
-		//Scene + Stage
-		
-			//CSS Styling
+
+		// Scene + Stage
+
+		// CSS Styling
 		mainPane.setStyle(
 				"-fx-background-color: #bfbfbf;-fx-border-color: #fafafa #787878 #787878 #fafafa; -fx-border-width: 9; -fx-border-radius: 0.001;");
 		topPane.setStyle(
 				"-fx-background-color: #bfbfbf; -fx-border-color: #787878 #fafafa #fafafa #787878; -fx-border-width: 6; -fx-border-radius: 0.001;");
-		
-		
+
 		window.setOnCloseRequest(e -> {
 			if (debug) {
 				System.out.println("[DEBUG] Closing Program.");
 			}
 		});
-		
+
 		window.getIcons().add(new Image("file:res/tiles/mine-grey.png"));
 		window.setTitle("Minesweeper");
 		window.setScene(new Scene(mainPane));
 		window.show();
 	}
-	
+
 	private static void setBoardButtons() {
-		
+
 		boardButtons = new Tile[boardSizeX][boardSizeY];
-		
+
 		for (int i = 0; i < boardSizeX; i++) {
 			int x = i;
 			for (int j = 0; j < boardSizeY; j++) {
 				int y = j;
 				boardButtons[i][j] = new Tile(48, 48);
-				
+
 				Tile currentTile = boardButtons[i][j];
-				
+
 				gamePane.add(currentTile, i, j);
-				
-				//Set face graphic to face-o when mouse is pressed/not released
-		        currentTile.addEventHandler(MouseEvent.MOUSE_PRESSED, e -> {
-		        	if(alive && !win) {
-		        		gameFace.setState(1);
-		        	}
-		        });
-		        
-		        currentTile.addEventHandler(MouseEvent.MOUSE_RELEASED, e -> {
-		        	if(alive && !win) {
-		        		gameFace.setState(0);
-		        	}
-		        });
-				
+
+				// Set face graphic to face-o when mouse is pressed/not released
+				currentTile.addEventHandler(MouseEvent.MOUSE_PRESSED, e -> {
+					if (alive && !win) {
+						gameFace.setState(1);
+					}
+				});
+
+				currentTile.addEventHandler(MouseEvent.MOUSE_RELEASED, e -> {
+					if (alive && !win) {
+						gameFace.setState(0);
+					}
+				});
+
 				currentTile.setOnMouseClicked(e -> {
 					MouseButton mbutton = e.getButton();
 					if (mbutton == MouseButton.PRIMARY && alive && !currentTile.isFlagged() && !win) {
-						
-						if(board[x][y] == 10) {
-							
+
+						if (board[x][y] == 10) {
+
 							alive = false;
 							boardButtons[x][y].setState(11);
 							gameFace.setState(2);
 							animation.stop();
-							
-							//Show Mines and check if flags are correct
-							for(int l = 0; l < boardSizeX; l++) {
+
+							// Show Mines and check if flags are correct
+							for (int l = 0; l < boardSizeX; l++) {
 								for (int k = 0; k < boardSizeY; k++) {
-										boardButtons[l][k].setIsMine(board[l][k] == 10 ? true:false);
-										boardButtons[l][k].checkFlag();
+									boardButtons[l][k].setIsMine(board[l][k] == 10 ? true : false);
+									boardButtons[l][k].checkFlag();
 								}
 							}
-							
-						
-						}else if(firstClick == true) {
+
+						} else if (firstClick == true) {
 							animation.play();
-							spawnMines(x,y);
+							spawnMines(x, y);
 							checkTiles();
-							//seeTiles();
-							firstClick = false;							
-							checkSurroundingTiles(x,y);
+							// seeTiles();
+							firstClick = false;
+							checkSurroundingTiles(x, y);
 							boardButtons[x][y].setState(board[x][y]);
-						}else {
-							checkSurroundingTiles(x,y);
+						} else {
+							checkSurroundingTiles(x, y);
 							boardButtons[x][y].setState(board[x][y]);
 						}
-						
-						
-						
-						
+
 					} else if (mbutton == MouseButton.SECONDARY && alive && !win) {
-						
-						boardButtons[x][y].setIsMine(board[x][y] == 10 ? true:false);
-						
+
+						boardButtons[x][y].setIsMine(board[x][y] == 10 ? true : false);
+
 						if (boardButtons[x][y].isFlagged()) {
 							boardButtons[x][y].flag(false);
 							remainingMines++;
@@ -278,58 +266,55 @@ public class GameClient extends Application {
 							remainingMines--;
 							remainingMinesDisplay.setDisplay(remainingMines);
 						}
-						
+
 					}
-					
-					if(correctFlags == initialMines) {
+
+					if (correctFlags == initialMines) {
 						gameFace.setState(3);
 						animation.stop();
 						win = true;
 					}
-					
-				}); //End setOnMouseClicked
-				
-			}//End inner for
-			
-		}//End outer for
-	}//end setBoardButtons method
-	
+
+				}); // End setOnMouseClicked
+
+			} // End inner for
+
+		} // End outer for
+	}// end setBoardButtons method
+
 	private static void spawnMines(int x, int y) {
-		//Spawn mines excluding the space at [x,y] and surrounding tiles.
+		// Spawn mines excluding the space at [x,y] and surrounding tiles.
 		int spawnedMines = 0;
-		
-		if(debug) {
-			System.out.println("[DEBUG] - Spawning mines excluding ["+x+"]["+y+"], and surrounding spacex");
+
+		if (debug) {
+			System.out.println("[DEBUG] - Spawning mines excluding [" + x + "][" + y + "], and surrounding spacex");
 		}
-		
-		while(spawnedMines < initialMines) {
-			
+
+		while (spawnedMines < initialMines) {
+
 			int randX = (int) (Math.random() * boardSizeX);
 			int randY = (int) (Math.random() * boardSizeY);
-			
+
 			int distance = (int) Math.sqrt(Math.pow(randX - x, 2) + Math.pow(randY - y, 2));
 			System.out.println("Approx Distance: " + distance);
-			
-			if(distance > 2 && board[randX][randY] != 10) {
-				
-				
-				if(debug) {
-					System.out.println("[DEBUG] - Randomized Mine at ["+randX+"]["+randY+"] #:" + spawnedMines);
+
+			if (distance > 2 && board[randX][randY] != 10) {
+
+				if (debug) {
+					System.out.println("[DEBUG] - Randomized Mine at [" + randX + "][" + randY + "] #:" + spawnedMines);
 				}
-				
+
 				board[randX][randY] = 10;
 				spawnedMines++;
 			}
-		
-		
+
 		}
-		if(debug) {
+		if (debug) {
 			System.out.println("[DEBUG] - Done setting mines.");
 		}
-		
-		
+
 	}
-	
+
 	private static void seeTiles() {
 		for (int k = 0; k < boardSizeX; k++) {
 
@@ -339,11 +324,12 @@ public class GameClient extends Application {
 
 		}
 	}
-	
+
 	public static void checkSurroundingTiles(int x, int y) {
 
-		//Checks if the surrounding tiles are blank spaces and recursively opens them if they are
-		
+		// Checks if the surrounding tiles are blank spaces and recursively opens them
+		// if they are
+
 		if (board[x][y] != 10) {
 
 			if (debug) {
@@ -437,10 +423,9 @@ public class GameClient extends Application {
 		}
 
 	}
-	
-	
+
 	private static void checkTiles() {
-		//Checks the board for mines, and sets up the corresponding numbers around them
+		// Checks the board for mines, and sets up the corresponding numbers around them
 
 		if (debug) {
 			System.out.println("[DEBUG] << Begin Checking Tiles >>");
@@ -529,6 +514,5 @@ public class GameClient extends Application {
 		}
 
 	}
-	
-	
+
 }
