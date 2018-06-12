@@ -7,7 +7,10 @@ public class Face extends Button {
 	protected int faceState = 0;
 	protected ImageView deadFace, supriseFace, smileFace, winFace;
 
-	public Face(int scaleX, int scaleY, boolean preserveRatio, boolean smoothing) {
+	public Face(int scaleX, int scaleY) {
+		
+		boolean preserveRatio = true;
+		boolean smoothing = true;
 
 		deadFace = new ImageView(new Image("file:res/faces/face-dead.png", scaleX, scaleY, preserveRatio, smoothing));
 		supriseFace = new ImageView(new Image("file:res/faces/face-o.png", scaleX, scaleY, preserveRatio, smoothing));
