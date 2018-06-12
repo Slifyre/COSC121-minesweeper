@@ -9,6 +9,7 @@ import javafx.scene.control.MenuBar;
 import javafx.scene.control.MenuItem;
 import javafx.scene.image.Image;
 import javafx.scene.input.MouseButton;
+import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.HBox;
@@ -205,6 +206,19 @@ public class GameClient extends Application {
 				Tile currentTile = boardButtons[i][j];
 				
 				gamePane.add(currentTile, i, j);
+				
+				//Set face graphic to face-o when mouse is pressed/not released
+		        currentTile.addEventHandler(MouseEvent.MOUSE_PRESSED, e -> {
+		        	if(alive && !win) {
+		        		gameFace.setState(1);
+		        	}
+		        });
+		        
+		        currentTile.addEventHandler(MouseEvent.MOUSE_RELEASED, e -> {
+		        	if(alive && !win) {
+		        		gameFace.setState(0);
+		        	}
+		        });
 				
 				currentTile.setOnMouseClicked(e -> {
 					MouseButton mbutton = e.getButton();
