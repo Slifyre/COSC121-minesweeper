@@ -217,13 +217,11 @@ public class GameClient extends Application {
 							gameFace.setState(2);
 							animation.stop();
 							
-							//Show Mines
+							//Show Mines and check if flags are correct
 							for(int l = 0; l < boardSizeX; l++) {
 								for (int k = 0; k < boardSizeY; k++) {
-									if(board[l][k] == 10) {
 										boardButtons[l][k].setIsMine(board[l][k] == 10 ? true:false);
 										boardButtons[l][k].checkFlag();
-									}
 								}
 							}
 							
