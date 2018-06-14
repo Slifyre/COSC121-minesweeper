@@ -4,12 +4,15 @@ import java.util.Optional;
 import javafx.animation.KeyFrame;
 import javafx.animation.Timeline;
 import javafx.application.Application;
+import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Scene;
+import javafx.scene.control.Button;
 import javafx.scene.control.Dialog;
 import javafx.scene.control.Menu;
 import javafx.scene.control.MenuBar;
 import javafx.scene.control.MenuItem;
+import javafx.scene.control.TextField;
 import javafx.scene.control.TextInputDialog;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
@@ -17,6 +20,10 @@ import javafx.scene.input.MouseButton;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.GridPane;
+import javafx.scene.layout.HBox;
+import javafx.scene.text.Font;
+import javafx.scene.text.Text;
+import javafx.stage.Modality;
 import javafx.stage.Stage;
 import javafx.util.Duration;
 
@@ -28,8 +35,6 @@ public class GameClient extends Application {
 	private static int correctFlags = 0;
 	private static int boardSizeX = 8;
 	private static int boardSizeY = 8;
-	private static int tileClicks = 0;
-	private static int highScore = 0;
 	private static int timeElapsed = 0;
 	private static int difficulty = 0;
 
@@ -39,6 +44,8 @@ public class GameClient extends Application {
 	private static boolean alive = true;
 	protected static boolean debug = false;
 	private static boolean win = false;
+	private static boolean hsReset = false;
+	private static boolean cheatMode = false;
 
 	// Panes
 	private static BorderPane mainPane; // Main window
@@ -69,7 +76,13 @@ public class GameClient extends Application {
 
 	// High Score popup
 	private static TextInputDialog hsPopup;
-	private static Dialog showScores;
+	private static Scene hsScene;
+	
+	private static Text hsTextB;
+	private static Text hsTextI;
+	private static Text hsTextE;
+	
+	private static String[] highScoresString;
 
 	// Main method
 	public static void main(String[] args) {
@@ -88,8 +101,8 @@ public class GameClient extends Application {
 		board = new int[boardSizeX][boardSizeY];
 		correctFlags = 0;
 		timeElapsed = 0;
-		tileClicks = 0;
 		remainingMines = initialMines;
+		
 
 		// Main BorderPane
 		mainPane = new BorderPane();
@@ -101,7 +114,7 @@ public class GameClient extends Application {
 		intermediate = new MenuItem("Intermediate");
 		expert = new MenuItem("Expert");
 
-		fileMenu = new Menu("File");
+		fileMenu = new Menu("Scores");
 		highScores = new MenuItem("High Scores");
 		resetHighScores = new MenuItem("Reset High Scores");
 		// saveGame = new MenuItem("Save Game");
@@ -149,14 +162,6 @@ public class GameClient extends Application {
 			start(window);
 		});
 
-		highScores.setOnAction(e -> {
-			showHighScores();
-		});
-
-		resetHighScores.setOnAction(e -> {
-			HighScores.newScoreFile(true);
-		});
-
 		mainPane.setTop(menuPane);
 
 		// Top Info Bar
@@ -173,7 +178,6 @@ public class GameClient extends Application {
 			// Resets the game when clicked
 			animation.stop();
 			start(window);
-			newHighScore();
 		});
 		topPane.setCenter(gameFace);
 
@@ -193,8 +197,64 @@ public class GameClient extends Application {
 		gamePane = new GridPane();
 		gamePane.setAlignment(Pos.CENTER);
 		mainPane.setBottom(gamePane);
+		
+		//High Score Window
+		Stage hsWindow = new Stage();
+		hsWindow.initOwner(window);
+		GridPane hsGridPane = new GridPane();
+		highScoresString = HighScores.getHighScores();
+		Text hsTextBd = new Text("Beginner: ");
+		Text hsTextId = new Text("Intermediate: ");
+		Text hsTextEd = new Text("Expert: ");
+		hsTextB = new Text(highScoresString[0]);
+		hsTextI = new Text(highScoresString[1]);
+		hsTextE = new Text(highScoresString[2]);
+		Button hsClose = new Button("Close");
+		hsTextBd.setFont(new Font(18));
+		hsTextId.setFont(new Font(18));
+		hsTextEd.setFont(new Font(18));
+		hsTextB.setFont(new Font(16));
+		hsTextI.setFont(new Font(16));
+		hsTextE.setFont(new Font(16));
+		
+		hsGridPane.setPadding(new Insets(15,15,15,15));
+		
+		hsGridPane.add(hsTextBd,0,0);
+		hsGridPane.add(hsTextB,1,0);
+		
+		hsGridPane.add(hsTextId,0,1);
+		hsGridPane.add(hsTextI,1,1);
+		
+		hsGridPane.add(hsTextEd,0,2);
+		hsGridPane.add(hsTextE,1,2);
+		
+		hsGridPane.add(hsClose,2,3);
+		
+		hsClose.setOnAction(e -> {
+			hsWindow.close();
+		});
+		
+		highScores.setOnAction(e -> {
+			hsReset = true;
+			animation.stop();
+			start(window);
+		});
+
+		resetHighScores.setOnAction(e -> {
+			HighScores.newScoreFile(true);
+			animation.stop();
+			start(window);
+		});
+		
+		
+		hsScene = new Scene(hsGridPane);
+		hsWindow.setTitle("Fastest Mine Sweepers");
+		hsWindow.getIcons().add(new Image("file:res/tiles/mine-grey.png"));
+		hsWindow.setScene(hsScene);
+		hsWindow.initModality(Modality.APPLICATION_MODAL);
 
 		setBoardButtons();
+		
 
 		// Scene + Stage
 
@@ -207,6 +267,7 @@ public class GameClient extends Application {
 		window.setOnCloseRequest(e -> {
 			if (debug) {
 				System.out.println("[DEBUG] Closing Program.");
+				hsWindow.close();
 			}
 		});
 
@@ -214,20 +275,14 @@ public class GameClient extends Application {
 		window.setTitle("Minesweeper");
 		window.setScene(new Scene(mainPane));
 		window.show();
-	}
-
-	private static void showHighScores() {
-
-		showScores = new Dialog();
-		showScores.setOnCloseRequest(e -> {
-
-			showScores.hide();
-
-		});
-		showScores.setTitle("Fastest Mine Sweepers");
-		showScores.setContentText(HighScores.getHighScores());
-		showScores.show();
-
+		
+		if(hsReset) {
+			//Allows High Score window to update
+			hsWindow.show();
+			hsWindow.close();
+			hsWindow.show();
+			hsReset = false;
+		}
 	}
 
 	private static void newHighScore() {
@@ -307,6 +362,9 @@ public class GameClient extends Application {
 							firstClick = false;
 							checkSurroundingTiles(x, y);
 							boardButtons[x][y].setState(board[x][y]);
+							if(cheatMode) {
+								seeTiles();
+							}
 						} else {
 							checkSurroundingTiles(x, y);
 							boardButtons[x][y].setState(board[x][y]);
@@ -328,7 +386,9 @@ public class GameClient extends Application {
 
 							if (boardButtons[x][y].isFlagAndMine()) {
 								correctFlags++;
-								System.out.println("[DEBUG] - Flag and Mine!");
+								if(debug) {
+									System.out.println("[DEBUG] - Flag and Mine!");
+								}
 							}
 
 							remainingMines--;
@@ -341,6 +401,11 @@ public class GameClient extends Application {
 						gameFace.setState(3);
 						animation.stop();
 						win = true;
+						
+						if(timeElapsed < HighScores.getFastestTime(timeElapsed, difficulty) || HighScores.getFastestTime(timeElapsed, difficulty) == 0) {
+							newHighScore();
+						}
+						
 					}
 
 				}); // End setOnMouseClicked

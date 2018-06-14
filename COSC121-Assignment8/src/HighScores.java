@@ -16,6 +16,7 @@ public class HighScores {
 		if (!f.exists() || overwrite) {
 			try {
 				f.createNewFile();
+				hsl.clear();
 
 				for (int i = 0; i < 3; i++) {
 					hsl.add(new playerObj(0, "---"));
@@ -40,35 +41,58 @@ public class HighScores {
 
 	}
 
-	public static String getHighScores() {
+	public static String[] getHighScores() {
 
 		File f = new File("sav/highScores.dat");
 
 		if (f.exists()) {
-			System.out.println("Loading high scores");
 			loadHighScores();
 		} else {
 			newScoreFile(true);
 		}
 
-		String output = "";
+		String[] output = new String[3];
 
 		for (int i = 0; i < 3; i++) {
+//
+//			if (i == 0) {
+//				output += "Beginner \t";
+//			} else if (i == 1) {
+//				output += "Intermediate \t";
+//			} else {
+//				output += "Expert \t";
+//			}
 
-			if (i == 0) {
-				output += "Beginner \t";
-			} else if (i == 1) {
-				output += "Intermediate \t";
-			} else {
-				output += "Expert \t";
-			}
-
-			output += ("Name: " + hsl.get(i).getName() + "\t Time: " + hsl.get(i).getScore() + "s\n");
+			output[i] = (hsl.get(i).getScore() + " seconds.\t" + hsl.get(i).getName());
 
 		}
 
 		return output;
 	}
+	
+	public static int getFastestTime(int time, int difficulty) {
+
+		File f = new File("sav/highScores.dat");
+
+		if (f.exists()) {
+			loadHighScores();
+		} else {
+			newScoreFile(true);
+		}
+		
+		if(difficulty == 0) {
+			return hsl.get(0).getScore();
+		}else if(difficulty == 1) {
+			return hsl.get(1).getScore();
+		}else if(difficulty == 2) {
+			return hsl.get(2).getScore();
+		}
+		
+
+		return 0;
+	}
+	
+	
 
 	@SuppressWarnings("unchecked")
 	public static void loadHighScores() {
