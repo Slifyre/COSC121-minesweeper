@@ -1,12 +1,18 @@
+import java.util.NoSuchElementException;
+import java.util.Optional;
+
 import javafx.animation.KeyFrame;
 import javafx.animation.Timeline;
 import javafx.application.Application;
 import javafx.geometry.Pos;
 import javafx.scene.Scene;
+import javafx.scene.control.Dialog;
 import javafx.scene.control.Menu;
 import javafx.scene.control.MenuBar;
 import javafx.scene.control.MenuItem;
+import javafx.scene.control.TextInputDialog;
 import javafx.scene.image.Image;
+import javafx.scene.image.ImageView;
 import javafx.scene.input.MouseButton;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.BorderPane;
@@ -23,12 +29,15 @@ public class GameClient extends Application {
 	private static int boardSizeX = 8;
 	private static int boardSizeY = 8;
 	private static int tileClicks = 0;
-
+	private static int highScore = 0;
 	private static int timeElapsed = 0;
+	private static int difficulty = 0;
+
+	private static String difficultyString = "Beginner";
 
 	private static boolean firstClick = true;
 	private static boolean alive = true;
-	protected static boolean debug = true;
+	protected static boolean debug = false;
 	private static boolean win = false;
 
 	// Panes
@@ -40,9 +49,10 @@ public class GameClient extends Application {
 	// Menu
 	private static Menu difficultyMenu;
 	private static Menu fileMenu;
-	private static MenuItem saveGame;
-	private static MenuItem loadGame;
+	// private static MenuItem saveGame;
+	// private static MenuItem loadGame;
 	private static MenuItem highScores;
+	private static MenuItem resetHighScores;
 	private static MenuItem beginner; // 10 Mines. 8x8 board
 	private static MenuItem intermediate; // 40 Mines. 16x16 board
 	private static MenuItem expert; // 99 Mines. 32x16 board
@@ -56,6 +66,10 @@ public class GameClient extends Application {
 	// Game Board
 	private static int[][] board; // Holds states of all tiles
 	private static Tile boardButtons[][]; // Holds actual button objects
+
+	// High Score popup
+	private static TextInputDialog hsPopup;
+	private static Dialog showScores;
 
 	// Main method
 	public static void main(String[] args) {
@@ -89,11 +103,13 @@ public class GameClient extends Application {
 
 		fileMenu = new Menu("File");
 		highScores = new MenuItem("High Scores");
-		saveGame = new MenuItem("Save Game");
-		loadGame = new MenuItem("Load Game");
+		resetHighScores = new MenuItem("Reset High Scores");
+		// saveGame = new MenuItem("Save Game");
+		// loadGame = new MenuItem("Load Game");
 		fileMenu.getItems().add(highScores);
-		fileMenu.getItems().add(loadGame);
-		fileMenu.getItems().add(saveGame);
+		fileMenu.getItems().add(resetHighScores);
+		// fileMenu.getItems().add(loadGame);
+		// fileMenu.getItems().add(saveGame);
 
 		difficultyMenu.getItems().add(beginner);
 		difficultyMenu.getItems().add(intermediate);
@@ -104,6 +120,8 @@ public class GameClient extends Application {
 
 		// Difficulty Options
 		beginner.setOnAction(e -> {
+			difficultyString = "Beginner";
+			difficulty = 0;
 			initialMines = 10;
 			boardSizeX = 8;
 			boardSizeY = 8;
@@ -112,6 +130,8 @@ public class GameClient extends Application {
 		});
 
 		intermediate.setOnAction(e -> {
+			difficultyString = "Intermediate";
+			difficulty = 1;
 			initialMines = 40;
 			boardSizeX = 16;
 			boardSizeY = 16;
@@ -120,11 +140,21 @@ public class GameClient extends Application {
 		});
 
 		expert.setOnAction(e -> {
+			difficultyString = "Expert";
+			difficulty = 2;
 			initialMines = 99;
 			boardSizeX = 32;
 			boardSizeY = 16;
 			animation.stop();
 			start(window);
+		});
+
+		highScores.setOnAction(e -> {
+			showHighScores();
+		});
+
+		resetHighScores.setOnAction(e -> {
+			HighScores.newScoreFile(true);
 		});
 
 		mainPane.setTop(menuPane);
@@ -143,6 +173,7 @@ public class GameClient extends Application {
 			// Resets the game when clicked
 			animation.stop();
 			start(window);
+			newHighScore();
 		});
 		topPane.setCenter(gameFace);
 
@@ -183,6 +214,43 @@ public class GameClient extends Application {
 		window.setTitle("Minesweeper");
 		window.setScene(new Scene(mainPane));
 		window.show();
+	}
+
+	private static void showHighScores() {
+
+		showScores = new Dialog();
+		showScores.setOnCloseRequest(e -> {
+
+			showScores.hide();
+
+		});
+		showScores.setTitle("Fastest Mine Sweepers");
+		showScores.setContentText(HighScores.getHighScores());
+		showScores.show();
+
+	}
+
+	private static void newHighScore() {
+
+		// Highscore popup
+		hsPopup = new TextInputDialog();
+		hsPopup.setX(400);
+		hsPopup.setY(200);
+		hsPopup.setTitle("New High Score! (" + difficultyString + ")");
+		hsPopup.setHeaderText("Enter your name: ");
+		hsPopup.setGraphic(new ImageView(new Image("file:res/faces/face-win.png")));
+		try {
+			Optional<String> hsGet = hsPopup.showAndWait();
+			String hsName = hsGet.get();
+
+			if (hsName.length() > 0) {
+				HighScores.addHighScore(timeElapsed, difficulty, hsName);
+				System.out.println(HighScores.getHighScores());
+			}
+		} catch (NoSuchElementException e) {
+
+		}
+
 	}
 
 	private static void setBoardButtons() {
@@ -296,7 +364,9 @@ public class GameClient extends Application {
 			int randY = (int) (Math.random() * boardSizeY);
 
 			int distance = (int) Math.sqrt(Math.pow(randX - x, 2) + Math.pow(randY - y, 2));
-			System.out.println("Approx Distance: " + distance);
+			if (debug) {
+				System.out.println("Approx Distance: " + distance);
+			}
 
 			if (distance > 2 && board[randX][randY] != 10) {
 
